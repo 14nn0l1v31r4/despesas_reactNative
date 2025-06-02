@@ -1,45 +1,55 @@
-import { Tabs } from 'expo-router';
+// app/(tabs)/_layout.tsx
+import { Ionicons } from '@expo/vector-icons'; // Para os ícones
+import { Drawer } from 'expo-router/drawer'; // Importar Drawer
 import React from 'react';
-import { Platform } from 'react-native';
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+// Seus imports de tema (Colors, useColorScheme) ainda podem ser úteis para estilizar o Drawer
+import { Colors } from '@/src/constants/Colors';
+import { useColorScheme } from '@/src/hooks/useColorScheme';
 
-export default function TabLayout() {
+// Componentes customizados como HapticTab e TabBarBackground não são diretamente aplicáveis ao Drawer,
+// mas você pode ter outras customizações para o Drawer se desejar.
+
+export default function TabLayout() { // Renomeado de TabLayout para AppDrawerLayout para clareza
   const colorScheme = useColorScheme();
+  const activeTintColor = Colors[colorScheme ?? 'light'].tint; // Exemplo de cor ativa
+  const inactiveTintColor = Colors[colorScheme ?? 'light'].tabIconDefault; // Exemplo de cor inativa
 
   return (
-    <Tabs
+    <Drawer
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
-      <Tabs.Screen
-        name="index"
+        headerShown: true, // Para exibir o cabeçalho em cada tela do Drawer (onde o botão de menu aparecerá)
+        drawerActiveTintColor: activeTintColor,
+        drawerInactiveTintColor: inactiveTintColor,
+        // drawerStyle: { backgroundColor: Colors[colorScheme ?? 'light'].background }, // Estilo do corpo do drawer
+        // Você pode adicionar mais screenOptions globais para o Drawer aqui
+      }}
+    >
+      <Drawer.Screen
+        name="index" // Corresponde ao arquivo app/(tabs)/index.tsx (sua HomeScreen)
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          drawerLabel: 'Início', // Texto que aparece no menu lateral
+          title: 'Despesas Pessoais', // Título no cabeçalho da tela "Início"
+          drawerIcon: ({ size, color }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
         }}
       />
-      <Tabs.Screen
-        name="explore"
+      {/* Se você quiser adicionar a tela "Explore" de volta, mas como um item de menu: */}
+      
+      {/* Você também pode adicionar a tela de "Relatório" aqui se quiser que ela seja parte do Drawer:
+          Para isso, o arquivo app/report.tsx precisaria ser movido para app/(tabs)/report.tsx
+      <Drawer.Screen
+        name="report" // Se report.tsx estiver em app/(tabs)/report.tsx
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          drawerLabel: 'Relatório',
+          title: 'Relatório',
+          drawerIcon: ({ size, color }) => (
+            <Ionicons name="document-text-outline" size={size} color={color} />
+          ),
         }}
       />
-    </Tabs>
+      */}
+    </Drawer>
   );
 }

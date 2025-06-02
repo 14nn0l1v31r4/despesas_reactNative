@@ -1,75 +1,177 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+// app/(tabs)/index.tsx
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  Platform, // Adicionado para o FAB
+} from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+// Modelos, Contexto e Componentes Reais
+import { Transaction } from '@/src/models/Transaction'; // Já deve existir
+import { useTransactions } from '@/src/context/TransactionContext'; // Usar o contexto
+import TransactionForm from '@/src/components/transactions/TransactionForm'; // Componente real
+import TransactionList from '@/src/components/transactions/TransactionList'; // Componente real
+import ExpensesChart from '@/src/components/chart/ExpensesChart'; // Componente real
+import ExpensesLineChart from '@/src/components/chart/ExpensesLineChart'; // Componente real
+
+// Cores (exemplo, use seu sistema de tema ou NativeWind)
+const THEME_COLORS = {
+  primary: 'purple',
+  secondary: 'pink',
+  white: '#FFFFFF',
+  backgroundScreen: '#F8EDF9',
+  fabBackground: 'pink', // Cor do FAB
+  iconColor: 'purple', // Cor para ícones do header
+  modalBackground: 'rgba(0,0,0,0.5)',
+  placeholderText: 'gray',
+};
 
 export default function HomeScreen() {
+  const router = useRouter();
+  // Obter dados e funções do TransactionContext
+  const {
+    transactions,
+    addTransaction,
+    removeTransaction,
+    recentTransactions,
+  } = useTransactions();
+
+  const [isFormModalVisible, setIsFormModalVisible] = useState(false);
+
+  // Handler para adicionar transação (agora usa a função do contexto)
+  const handleAddTransaction = (title: string, value: number, date: Date) => {
+    addTransaction(title, value, date); // Chama a função do contexto
+    setIsFormModalVisible(false); // Fecha o modal
+  };
+
+  // Handler para remover transação (agora usa a função do contexto)
+  // A confirmação (Alert) estará dentro do TransactionListItem
+  const handleRemoveTransaction = (id: string) => {
+    removeTransaction(id); // Chama a função do contexto
+  };
+
+  const openTransactionFormModal = () => {
+    setIsFormModalVisible(true);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <View style={styles.screen}>
+      <Stack.Screen
+        options={{
+          title: 'Despesas Pessoais',
+          headerStyle: { backgroundColor: THEME_COLORS.primary },
+          headerTintColor: THEME_COLORS.white,
+          headerTitleStyle: { fontWeight: 'bold' },
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={openTransactionFormModal}
+              style={{ marginRight: 15 }}
+            >
+              <Ionicons
+                name="add-circle"
+                size={28}
+                color={THEME_COLORS.white} // Ícone branco no header roxo
+              />
+            </TouchableOpacity>
+          ),
+          // Exemplo de botão para navegação para Relatório (se não estiver no Drawer)
+          // Se você tiver um Drawer, este botão pode não ser necessário aqui.
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => router.push('/report')} // Navega para a tela de relatório
+              style={{ marginLeft: 15 }}
+            >
+              <Ionicons
+                name="document-text-outline"
+                size={26}
+                color={THEME_COLORS.white}
+              />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+
+        {/* Renderiza o gráfico de barras com as transações recentes */}
+        <ExpensesChart recentTransactions={recentTransactions} />
+
+        {/* Renderiza a lista de transações */}
+        <TransactionList
+          transactions={transactions}
+          onRemove={handleRemoveTransaction} // Passa a função de remoção
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+
+        {/* Renderiza o gráfico de linha com todas as transações */}
+        <ExpensesLineChart transactions={transactions} />
+      
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={openTransactionFormModal}
+      >
+        <Ionicons name="add" size={30} color={THEME_COLORS.white} />
+      </TouchableOpacity>
+
+      {/* Modal para o TransactionForm */}
+      <Modal
+        visible={isFormModalVisible}
+        onRequestClose={() => setIsFormModalVisible(false)}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalContainerForForm}>
+          <TransactionForm
+            onSubmit={handleAddTransaction}
+            onClose={() => setIsFormModalVisible(false)}
+          />
+        </View>
+      </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  screen: {
+    flex: 1,
+    backgroundColor: THEME_COLORS.backgroundScreen,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  body: {
+    paddingBottom: 80, // Espaço para o FAB não sobrepor conteúdo da ScrollView
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  fab: {
     position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+    backgroundColor: THEME_COLORS.fabBackground,
+    borderRadius: 28,
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: Platform.OS === 'android' ? 6 : 0, // Sombra para Android
+    // Sombra para iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: Platform.OS === 'ios' ? 0.3 : 0,
+    shadowRadius: Platform.OS === 'ios' ? 3 : 0,
   },
-});
+  modalContainerForForm: {
+    flex: 1,
+    justifyContent: 'flex-end', // Posiciona o formulário na parte inferior
+    backgroundColor: THEME_COLORS.modalBackground,
+  },
+  // PlaceholderText não é mais necessário se os componentes reais forem usados
+  // placeholderText: {
+  //   textAlign: 'center',
+  //   padding: 20,
+  //   fontSize: 16,
+  //   color: THEME_COLORS.placeholderText,
+  // },
+}); 

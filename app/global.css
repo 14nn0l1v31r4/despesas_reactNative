@@ -1,0 +1,4 @@
+/* app/global.css (ou o caminho que você escolheu) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
